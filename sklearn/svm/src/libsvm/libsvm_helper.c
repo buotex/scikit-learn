@@ -92,6 +92,15 @@ void set_problem(struct svm_problem *problem, char *X, char *Y, char *sample_wei
     problem->W = (double *) sample_weight;
 }
 
+void set_problem2(struct svm_problem *problem, char *X, char *Y, char *sample_weight, npy_intp *dims, int kernel_type, char *tags)
+{
+    if (problem == NULL) return;
+    problem->l = (int) dims[0]; /* number of samples */
+    problem->y = (double *) Y;
+    problem->x = dense_to_libsvm((double *) X, dims); /* implicit call to malloc */
+    problem->W = (double *) sample_weight;
+    problem->tags = (char *) tags;
+}
 /*
  * Create and return an instance of svm_model.
  *

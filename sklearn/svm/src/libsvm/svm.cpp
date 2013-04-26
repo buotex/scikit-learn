@@ -1732,7 +1732,9 @@ static void solve_one_class(
 	delete[] ones;
 }
 
-static void solve_epsilon_svr(
+
+
+static void solve_epsilon_svr2(
 	const PREFIX(problem) *prob, const svm_parameter *param,
 	double *alpha, Solver::SolutionInfo* si)
 {
@@ -1769,6 +1771,40 @@ static void solve_epsilon_svr(
 
 
 	delete[] alpha2;
+	delete[] linear_term;
+        delete[] C;
+	delete[] y;
+}
+
+static void solve_epsilon_svr(
+	const PREFIX(problem) *prob, const svm_parameter *param,
+	double *alpha, Solver::SolutionInfo* si)
+{
+	int l = prob->l;
+  double *linear_term = new double[l];
+	schar *y = new schar[l];
+  double *C = new double[l];
+  int i;
+	
+  for(i=0;i<l;i++)
+	{
+		alpha[i] = 0;
+
+    y[i] = prob->tags[i];
+		linear_term[i] = param->p - prob->tags[i] * prob->y[i];
+    C[i] = prob->W[i]*param->C;
+
+	}
+
+	Solver s;
+	s.Solve(l, SVR_Q(*prob,*param), linear_term, y,
+		alpha, C, param->eps, si, param->shrinking, param->max_iter);
+
+	for(i=0;i<l;i++)
+	{
+    alpha[i] = alpha[i] * prob->tags[i];
+	}
+
 	delete[] linear_term;
         delete[] C;
 	delete[] y;
@@ -1850,7 +1886,7 @@ static decision_function svm_train_one(
  			solve_one_class(prob,param,alpha,&si);
  			break;
  		case EPSILON_SVR:
-			si.upper_bound = Malloc(double,2*prob->l); 
+			si.upper_bound = Malloc(double,prob->l); 
  			solve_epsilon_svr(prob,param,alpha,&si);
  			break;
  		case NU_SVR:

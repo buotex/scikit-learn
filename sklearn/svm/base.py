@@ -93,7 +93,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         kernel = self.kernel
         return kernel == "precomputed" or callable(kernel)
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, tags = None, sample_weight=None):
         """Fit the SVM model according to the given training data.
 
         Parameters
@@ -167,7 +167,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         fit = self._sparse_fit if self._sparse else self._dense_fit
         if self.verbose:  # pragma: no cover
             print('[LibSVM]', end='')
-        fit(X, y, sample_weight, solver_type, kernel)
+        fit(X, y, sample_weight, tags, solver_type, kernel)
 
         self.shape_fit_ = X.shape
 
@@ -196,7 +196,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                           ' StandardScaler or MinMaxScaler.'
                           % self.max_iter, ConvergenceWarning)
 
-    def _dense_fit(self, X, y, sample_weight, solver_type, kernel):
+    def _dense_fit(self, X, y, sample_weight, tags, solver_type, kernel):
         if callable(self.kernel):
             # you must store a reference to X to compute the kernel in predict
             # TODO: add keyword copy to copy on demand
@@ -220,7 +220,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                 shrinking=self.shrinking, tol=self.tol,
                 cache_size=self.cache_size, coef0=self.coef0,
                 gamma=self._gamma, epsilon=self.epsilon,
-                max_iter=self.max_iter)
+                max_iter=self.max_iter, tags = tags)
 
         self._warn_from_fit_status()
 

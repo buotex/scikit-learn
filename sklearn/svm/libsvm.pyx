@@ -62,7 +62,11 @@ def fit(
         sample_weight=np.empty(0),
     int shrinking=1, int probability=0,
     double cache_size=100.,
-    int max_iter=-1):
+    int max_iter=-1, 
+    np.ndarray[np.int8_t, ndim = 1, mode = 'c'] 
+        tags = np.empty(0)
+
+):
     """
     Train the model using libsvm (low-level method)
 
@@ -150,8 +154,8 @@ def fit(
 
     # set problem
     kernel_index = LIBSVM_KERNEL_TYPES.index(kernel)
-    set_problem(
-        &problem, X.data, Y.data, sample_weight.data, X.shape, kernel_index)
+    set_problem2(
+        &problem, X.data, Y.data, sample_weight.data, X.shape, kernel_index, tags.data)
     if problem.x == NULL:
         raise MemoryError("Seems we've run out of memory")
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] \
