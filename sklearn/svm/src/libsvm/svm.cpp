@@ -1734,47 +1734,47 @@ static void solve_one_class(
 
 
 
-static void solve_epsilon_svr2(
-	const PREFIX(problem) *prob, const svm_parameter *param,
-	double *alpha, Solver::SolutionInfo* si)
-{
-	int l = prob->l;
-	double *alpha2 = new double[2*l];
-	double *linear_term = new double[2*l];
-	schar *y = new schar[2*l];
-        double *C = new double[2*l];
-        int i;
-
-	for(i=0;i<l;i++)
-	{
-		alpha2[i] = 0;
-		linear_term[i] = param->p - prob->y[i];
-		y[i] = 1;
-                C[i] = prob->W[i]*param->C;
-
-		alpha2[i+l] = 0;
-		linear_term[i+l] = param->p + prob->y[i];
-		y[i+l] = -1;
-                C[i+l] = prob->W[i]*param->C;
-	}
-
-	Solver s;
-	s.Solve(2*l, SVR_Q(*prob,*param), linear_term, y,
-		alpha2, C, param->eps, si, param->shrinking, param->max_iter);
-
-	double sum_alpha = 0;
-	for(i=0;i<l;i++)
-	{
-		alpha[i] = alpha2[i] - alpha2[i+l];
-		sum_alpha += fabs(alpha[i]);
-	}
-
-
-	delete[] alpha2;
-	delete[] linear_term;
-        delete[] C;
-	delete[] y;
-}
+//static void solve_epsilon_svr(
+//	const PREFIX(problem) *prob, const svm_parameter *param,
+//	double *alpha, Solver::SolutionInfo* si)
+//{
+//	int l = prob->l;
+//	double *alpha2 = new double[2*l];
+//	double *linear_term = new double[2*l];
+//	schar *y = new schar[2*l];
+//        double *C = new double[2*l];
+//        int i;
+//
+//	for(i=0;i<l;i++)
+//	{
+//		alpha2[i] = 0;
+//		linear_term[i] = param->p - prob->y[i];
+//		y[i] = 1;
+//                C[i] = prob->W[i]*param->C;
+//
+//		alpha2[i+l] = 0;
+//		linear_term[i+l] = param->p + prob->y[i];
+//		y[i+l] = -1;
+//                C[i+l] = prob->W[i]*param->C;
+//	}
+//
+//	Solver s;
+//	s.Solve(2*l, SVR_Q(*prob,*param), linear_term, y,
+//		alpha2, C, param->eps, si, param->shrinking, param->max_iter);
+//
+//	double sum_alpha = 0;
+//	for(i=0;i<l;i++)
+//	{
+//		alpha[i] = alpha2[i] - alpha2[i+l];
+//		sum_alpha += fabs(alpha[i]);
+//	}
+//
+//
+//	delete[] alpha2;
+//	delete[] linear_term;
+//        delete[] C;
+//	delete[] y;
+//}
 
 static void solve_epsilon_svr(
 	const PREFIX(problem) *prob, const svm_parameter *param,
