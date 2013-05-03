@@ -1573,6 +1573,82 @@ private:
 	double *QD;
 };
 
+class SVR_Q2 : public Kernel
+{
+ public:
+	SVR_Q2(const PREFIX(problem)& prob, const svm_parameter& param)
+	:Kernel(prob.l, prob.x, param)
+	{
+		l = prob.l;
+		cache = new Cache(l,(long int)(param.cache_size*(1<<20)));
+
+		QD = new double[l];
+		sign = new schar[l];
+		index = new int[l];
+		for(int k=0;k<l;k++)
+		{
+      sign[k] = prob.tags[k];
+			index[k] = k;
+			QD[k] = (this->*kernel_function)(k,k);
+		}
+		buffer[0] = new Qfloat[l];
+		buffer[1] = new Qfloat[l];
+		next_buffer = 0;
+	}
+
+	void swap_index(int i, int j) const
+	{
+		swap(sign[i],sign[j]);
+		swap(index[i],index[j]);
+		swap(QD[i],QD[j]);
+	}
+	
+	Qfloat *get_Q(int i, int len) const
+	{
+		Qfloat *data;
+		int j, real_i = index[i];
+		if(cache->get_data(real_i,&data,l) < l)
+		{
+			for(j=0;j<l;j++)
+				data[j] = (Qfloat)(this->*kernel_function)(real_i,j);
+		}
+
+		// reorder and copy
+		Qfloat *buf = buffer[next_buffer];
+		next_buffer = 1 - next_buffer;
+		schar si = sign[i];
+		for(j=0;j<len;j++)
+			buf[j] = (Qfloat) si * (Qfloat) sign[j] * data[index[j]];
+		return buf;
+	}
+
+	double *get_QD() const
+	{
+		return QD;
+	}
+
+	~SVR_Q2()
+	{
+		delete cache;
+		delete[] sign;
+		delete[] index;
+		delete[] buffer[0];
+		delete[] buffer[1];
+		delete[] QD;
+	}
+private:
+	int l;
+	Cache *cache;
+	schar *sign;
+	int *index;
+	mutable int next_buffer;
+	Qfloat *buffer[2];
+	double *QD;
+
+
+};
+
+
 //
 // construct and solve various formulations
 //
@@ -1797,7 +1873,7 @@ static void solve_epsilon_svr(
 	}
 
 	Solver s;
-	s.Solve(l, SVR_Q(*prob,*param), linear_term, y,
+	s.Solve(l, SVR_Q2(*prob,*param), linear_term, y,
 		alpha, C, param->eps, si, param->shrinking, param->max_iter);
 
 	for(i=0;i<l;i++)
